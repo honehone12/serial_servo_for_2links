@@ -127,8 +127,8 @@ void loop()
             4
         );
         // for test
-        //writing_data.feedbacks.upper_feedback = 1.2345f;
-        //writing_data.feedbacks.lower_feedback = 5.6789f;
+        writing_data.feedbacks.upper_feedback = (float)commands.command_upper;
+        writing_data.feedbacks.lower_feedback = (float)commands.command_lower;
         Serial.write(
             writing_data.bin,
             8
