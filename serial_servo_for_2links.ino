@@ -6,6 +6,7 @@
 #define SERIAL_SERVO_TOTAL_COMMUNICATE_BYTES 14
 #define SERIAL_SERVO_MAX_FALSE_COUNT 255
 #define SERIAL_SERVO_TIME_OUT 500 //0.5sec
+#define SERIAL_SERVO_SLEEP_FOR_TARGET_FPS 16 //60FPS
 
 static const byte header[]
 {
@@ -50,15 +51,8 @@ void readCommands()
         Serial.read() == 0x02 && Serial.read() == SERIAL_SERVO_BYTE_TYPE 
     )
     {
-        byte cmd_upper(Serial.read());
         byte cmd_lower(Serial.read());
-        if(
-            cmd_upper >= ROTATION_SERVO_CCW_MAX && 
-            cmd_upper <= ROTATION_SERVO_CW_MAX
-        )
-        {
-            commands.command_upper = cmd_upper;
-        }
+        byte cmd_upper(Serial.read());
         if(
             cmd_lower >= ROTATION_SERVO_CCW_MAX &&
             cmd_lower <= ROTATION_SERVO_CW_MAX
@@ -66,24 +60,31 @@ void readCommands()
         {
             commands.command_lower = cmd_lower;    
         }
+        if(
+            cmd_upper >= ROTATION_SERVO_CCW_MAX && 
+            cmd_upper <= ROTATION_SERVO_CW_MAX
+        )
+        {
+            commands.command_upper = cmd_upper;
+        }
     }
 }
 
 void setup()
 {
-    servo_set.upper_servo_ptr = new Servo();
     servo_set.lower_servo_ptr = new Servo();
+    servo_set.upper_servo_ptr = new Servo();
     servoInit(&servo_set);
 
-    commands.command_upper = ROTATION_SERVO_STOPPING;
     commands.command_lower = ROTATION_SERVO_STOPPING;
+    commands.command_upper = ROTATION_SERVO_STOPPING;
     time_last_cmd = 0;
 
     Serial.begin(SERIAL_SERVO_BAUD_RATE);
 
     while (!Serial)
     {
-        delay(10);
+        delay(SERIAL_SERVO_SLEEP_FOR_TARGET_FPS);
     }
 }
 
@@ -103,12 +104,9 @@ void loop()
         if(Serial.available() >= SERIAL_SERVO_TOTAL_COMMUNICATE_BYTES)
         {
             readCommands();
-            servo_set.upper_servo_ptr->write(commands.command_upper);
             servo_set.lower_servo_ptr->write(commands.command_lower);
+            servo_set.upper_servo_ptr->write(commands.command_upper);
             time_last_cmd = time_now;
-
-            //60fps loop
-            delay(15);
         }
 
         if(time_now - time_last_cmd > SERIAL_SERVO_TIME_OUT)
@@ -116,8 +114,9 @@ void loop()
             prepareExit(&servo_set);
         }
 
-        readFeedBack(&writing_data);
-        
+        delay(SERIAL_SERVO_SLEEP_FOR_TARGET_FPS);
+
+        readFeedBack(&writing_data);        
         Serial.write(
             header,
             8
@@ -127,8 +126,8 @@ void loop()
             4
         );
         // for test
-        writing_data.feedbacks.upper_feedback = (float)commands.command_upper;
-        writing_data.feedbacks.lower_feedback = (float)commands.command_lower;
+        //writing_data.feedbacks.upper_feedback = (float)commands.command_upper;
+        //writing_data.feedbacks.lower_feedback = (float)commands.command_lower;
         Serial.write(
             writing_data.bin,
             8
