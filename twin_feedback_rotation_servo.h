@@ -22,20 +22,20 @@
 
 struct ServoSet
 {
-    Servo* upper_servo_ptr;
     Servo* lower_servo_ptr;
+    Servo* upper_servo_ptr;
 };
 
 struct Feedbacks
 {
-    float upper_feedback;
     float lower_feedback;
+    float upper_feedback;
 };
 
 struct Commands
 {
-    uint8_t command_upper;
     uint8_t command_lower;
+    uint8_t command_upper;
 };
 
 union WritingData
@@ -46,8 +46,8 @@ union WritingData
 
 void prepareExit(const ServoSet* servo_set_ptr)
 {
-    servo_set_ptr->upper_servo_ptr->write(ROTATION_SERVO_STOPPING);
     servo_set_ptr->lower_servo_ptr->write(ROTATION_SERVO_STOPPING);
+    servo_set_ptr->upper_servo_ptr->write(ROTATION_SERVO_STOPPING);
 }
 
 void servoInit(const ServoSet* servo_set_ptr)
